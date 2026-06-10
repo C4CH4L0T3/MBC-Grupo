@@ -123,6 +123,45 @@ setTimeout(() => {
 
 
 /* ===========================================================
+   4b · HERO VIDEO · autoplay robusto en iOS
+   --------------------------------------------------------
+   Safari en iPhone bloquea el autoplay si el dispositivo está
+   en modo de bajo consumo, y algunas versiones ignoran el
+   atributo muted del HTML. Forzamos muted por JS, intentamos
+   play() al cargar y reintentamos en el primer toque/gesto.
+   =========================================================== */
+(() => {
+  const video = document.querySelector('[data-hero-video]');
+  if (!video) return;
+
+  // iOS exige que muted/playsInline estén puestos como propiedades
+  // antes de intentar reproducir.
+  video.muted = true;
+  video.playsInline = true;
+
+  function tryPlay() {
+    if (!video.paused) return;
+    const p = video.play();
+    if (p && p.catch) p.catch(() => {/* bloqueado: esperamos un gesto */});
+  }
+
+  // Intento inicial (cubre el caso normal).
+  tryPlay();
+  window.addEventListener('load', tryPlay);
+
+  // Reintento con el primer gesto del usuario (cubre modo bajo consumo).
+  ['touchstart', 'touchend', 'click', 'wheel', 'keydown'].forEach((evt) => {
+    window.addEventListener(evt, tryPlay, { once: true, passive: true });
+  });
+
+  // Si la pestaña vuelve a estar visible, retomar la reproducción.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tryPlay();
+  });
+})();
+
+
+/* ===========================================================
    5 · HERO · scroll-to-expand
    --------------------------------------------------------
    Port of the 21st.dev ScrollExpandMedia behavior to vanilla:
