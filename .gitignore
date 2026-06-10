@@ -7,3 +7,6 @@ node_modules/
 *.log
 Hero-materials/
 drive-download/
+
+.vercel
+venecia-images/
